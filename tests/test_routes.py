@@ -177,3 +177,22 @@ class TestAccountService(TestCase):
         """It should not allow an illegal Method call"""
         resp = self.client.put(BASE_URL)
         self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_security_headers(self):
+        """It should return security headers"""
+        response = self.client.get('/', environ_overrides={'wsgi.url_scheme': 'https'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        headers = {
+            'X-Frame-Options': 'DENY',
+            'X-Content-Type-Options': 'nosniff',
+            'Referrer-Policy': 'strict-origin-when-cross-origin'
+        }
+        for key, value in headers.items():
+            self.assertEqual(response.headers.get(key), value)
+
+    def test_cors_security(self):
+        """It should return CORS headers"""
+        response = self.client.get('/', environ_overrides={'wsgi.url_scheme': 'https'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check for CORS header
+        self.assertEqual(response.headers.get('Access-Control-Allow-Origin'), '*')
